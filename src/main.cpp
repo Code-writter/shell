@@ -20,6 +20,10 @@ int main() {
     string command;
     getline(cin, command);
 
+    if(command == "exit"){
+      break;
+    }
+
     // Command not found message
     cout<<command<<": command not found "<<endl;
   }
