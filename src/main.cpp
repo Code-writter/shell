@@ -64,7 +64,7 @@ int main(){
             if(parts_of_input.size() > 2) continue;
             string args = parts_of_input[1];
 
-            if(args == "exit" || args == "echo" || args == "type")
+            if(args == "exit" || args == "echo" || args == "type" || args == "pwd")
             {
                 cout<<args<<" is a shell builtin"<<endl;
             }
