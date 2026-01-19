@@ -2,7 +2,6 @@
 
 using namespace std;
 
-//Split string into tokens
 vector<string> split_input(string input) {
     vector<string> args;
     string current_arg;
@@ -11,47 +10,104 @@ vector<string> split_input(string input) {
     for (size_t i = 0; i < input.length(); i++) {
         char c = input[i];
         
+        // --- NEW LOGIC: Backslash handling ---
+        // Only handle backslash if we are NOT inside quotes
+        if (c == '\\' && quote_char == 0) {
+            // Ensure we don't overflow if '\' is the very last char
+            if (i + 1 < input.length()) {
+                i++; // Skip the backslash
+                current_arg += input[i]; // Add the next char literally
+            }
+            continue; // Move to next iteration
+        }
+
+        // --- Standard Quote Logic ---
         if (c == '\'' || c == '"') {
             if (quote_char == 0) {
-                // START of a quoted section
-                quote_char = c;
+                quote_char = c; // Start quoting
             } 
             else if (quote_char == c) {
-                // END of the quoted section (matching quote found)
-                quote_char = 0;
+                quote_char = 0; // End quoting
             } 
             else {
-                // We are inside quotes, but found a DIFFERENT quote type.
-                // Example: echo "shell's"
-                // We are in ", we found '. Treat it as literal text.
-                current_arg += c;
+                current_arg += c; // Quote inside a different quote (e.g. " ' ")
             }
         } 
+        // --- Space Logic ---
         else if (c == ' ') {
             if (quote_char != 0) {
-                // Inside quotes: Space is literal text
-                current_arg += c;
+                current_arg += c; // Space inside quotes
             } else {
-                // Outside quotes: Space is a separator
+                // Space outside quotes -> New Argument
                 if (!current_arg.empty()) {
                     args.push_back(current_arg);
                     current_arg.clear();
                 }
             }
         } 
+        // --- Normal Character ---
         else {
-            // Normal character
             current_arg += c;
         }
     }
     
-    // Push the last argument if exists
     if (!current_arg.empty()) {
         args.push_back(current_arg);
     }
     
     return args;
 }
+
+// //Split string into tokens
+// vector<string> split_input(string input) {
+//     vector<string> args;
+//     string current_arg;
+//     char quote_char = 0; // 0 = None, ' = Single, " = Double
+    
+//     for (size_t i = 0; i < input.length(); i++) {
+//         char c = input[i];
+        
+//         if (c == '\'' || c == '"') {
+//             if (quote_char == 0) {
+//                 // START of a quoted section
+//                 quote_char = c;
+//             } 
+//             else if (quote_char == c) {
+//                 // END of the quoted section (matching quote found)
+//                 quote_char = 0;
+//             } 
+//             else {
+//                 // We are inside quotes, but found a DIFFERENT quote type.
+//                 // Example: echo "shell's"
+//                 // We are in ", we found '. Treat it as literal text.
+//                 current_arg += c;
+//             }
+//         } 
+//         else if (c == ' ') {
+//             if (quote_char != 0) {
+//                 // Inside quotes: Space is literal text
+//                 current_arg += c;
+//             } else {
+//                 // Outside quotes: Space is a separator
+//                 if (!current_arg.empty()) {
+//                     args.push_back(current_arg);
+//                     current_arg.clear();
+//                 }
+//             }
+//         } 
+//         else {
+//             // Normal character
+//             current_arg += c;
+//         }
+//     }
+    
+//     // Push the last argument if exists
+//     if (!current_arg.empty()) {
+//         args.push_back(current_arg);
+//     }
+    
+//     return args;
+// }
 
 
 
