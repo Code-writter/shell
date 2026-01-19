@@ -93,6 +93,17 @@ int main(){
         {
             if(parts_of_input.size() > 1){
                 string path = parts_of_input[1];
+
+                // Handle ~  for Home path
+                if(path == "~"){
+                    const char* home = getenv("HOME");
+                    if(home){
+                        path = home;
+                    }else{
+                        cout<<"cd: HOME environment variable not set";
+                        continue;
+                    }
+                }
                 // chdir returns 0 on sucess and -1 on failure
                 if(chdir(path.c_str()) != 0){
                     cout<<"cd: "<<path<<": No such file or directory"<<endl;
