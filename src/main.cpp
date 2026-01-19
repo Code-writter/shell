@@ -1,6 +1,6 @@
 #include<bits/stdc++.h>
 #include<sys/wait.h> // For wait()
-
+#include<filesystem> // for pwd
 
 // Custom Headers
 #include "get_file_path.h"
@@ -82,7 +82,13 @@ int main(){
                 }
             }
 
-        }else
+        }
+        // Current Path 
+        else if(command == "pwd")
+        {
+            cout<<filesystem::current_path().string()<<endl;
+        }
+        else
         {
             // --- EXECUTE EXTERNAL PROGRAM ----
 
