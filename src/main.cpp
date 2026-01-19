@@ -23,9 +23,18 @@ int main() {
     if(command == "exit"){
       break;
     }
+    // Here we are taking the string after four then printing all the command
+    else if(command.substr(0, 4) == "echo"){
+      cout<<command.substr(5)<<endl;
 
-    // Command not found message
-    cout<<command<<": command not found "<<endl;
+    }else{
+      // Command not found message
+      cout<<command<<": command not found "<<endl;
+    }
+
+
+
+
   }
 
 }
