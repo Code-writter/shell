@@ -95,7 +95,7 @@ int main(){
                 string path = parts_of_input[1];
                 // chdir returns 0 on sucess and -1 on failure
                 if(chdir(path.c_str()) != 0){
-                    cout<<"cd: "<<path<<": No such file or direcotry"<<endl;
+                    cout<<"cd: "<<path<<": No such file or directory"<<endl;
                 }
             }
         }
