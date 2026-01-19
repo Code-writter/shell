@@ -120,27 +120,30 @@ int main(){
         {
             if(setup_builtin_redirection()){
 
-                if(parts_of_input.size() >= 2) continue;
-                string args = parts_of_input[1];
+                if(parts_of_input.size() >= 2){
 
-                if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd")
-                {
-                    cout<<args<<" is a shell builtin"<<endl;
-                }
-                else
-                {
-                    // Get path
+                    
+                    string args = parts_of_input[1];
 
-                    string path = get_path(args);
-
-                    if(!path.empty()){
-                        cout<<args<<" is "<<path<<endl;
+                    if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd")
+                    {
+                        cout<<args<<" is a shell builtin"<<endl;
                     }
-                    else{
-                        cout<<args<<": not found"<<endl;
+                    else
+                    {
+                        // Get path
+
+                        string path = get_path(args);
+
+                        if(!path.empty()){
+                            cout<<args<<" is "<<path<<endl;
+                        }
+                        else{
+                            cout<<args<<": not found"<<endl;
+                        }
                     }
+                    restore_builtin_redirection();
                 }
-                restore_builtin_redirection();
             }
         }
 
