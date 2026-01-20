@@ -191,7 +191,25 @@ bool run_command(vector<string> input, bool should_fork = true){
                 else{
                     cerr<<"history: option requires an argument -- 'r'"<<endl;
                 }
-            }else{
+            }
+            else if(input.size() > 2 && input[1] == "-w"){
+                if(input.size()> 2){
+                    string filename = input[2];
+
+                    ofstream file(filename);
+                    if(file.is_open()){
+                        for(const auto& line : command_history){
+                            file<<line <<endl;
+                        }
+                        file.close();
+                    }else{
+                        cerr<<"history: "<< filename <<": cannot create file"<<endl;
+                    }
+                }else{
+                    cerr<<"history: option requires an argument -- 'w'"<<endl;
+                }
+            }
+            else{
                 int start_index = 0;
                 if(input.size() > 1){
                     try{
