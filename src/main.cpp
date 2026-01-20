@@ -9,9 +9,9 @@
 #include<readline/history.h>
 
 // Custom Headers
-#include "get_file_path.h"
-#include "split_input.h"
-#include "builtin_generator.h"
+// #include "get_file_path.h"
+// #include "split_input.h"
+// #include "builtin_generator.h"
 #include "run_command.h"
 
 using namespace std;
@@ -69,17 +69,6 @@ int main(){
         //     }
         // }
 
-        // Parsing Input into list of strings
-        vector<string> parts_of_input = split_input(input_line);
-        if(parts_of_input.empty()) continue;
-
-        // _______PIPELINE SUPPORT (|)__________
-
-        // 1. Finding the pipe in the command
-        auto pipe_it = find(parts_of_input.begin(), parts_of_input.end(), "|");
-
-        // 2. We got the pipe in the command
-        // }
 
         // Parsing Input into list of strings
         vector<string> parts_of_input = split_input(input_line);

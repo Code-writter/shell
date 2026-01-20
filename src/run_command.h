@@ -16,7 +16,7 @@
 using namespace std;
 
 
-bool run_command(vector<string> parts_of_input){
+bool run_command(vector<string> input){
 
     // ________________DETECT REDIRECTION__________
     string stdout_file = "";
@@ -25,71 +25,71 @@ bool run_command(vector<string> parts_of_input){
     bool stderr_append = false; // For 2>> appending the stderr
 
     // Scan loop must handle erasing elements dynamically
-    for(size_t i = 0; i<parts_of_input.size(); ){
+    for(size_t i = 0; i<input.size(); ){
         // Check for append first
-        if(parts_of_input[i] == ">>" || parts_of_input[i] == "1>>"){
-            if(i + 1 < parts_of_input.size()){
-                stdout_file = parts_of_input[i+ 1];
+        if(input[i] == ">>" || input[i] == "1>>"){
+            if(i + 1 < input.size()){
+                stdout_file = input[i+ 1];
                 stdout_append = true; // Enable append Mode
 
                 // Erase other part
-                parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                input.erase(input.begin() + i, input.begin() + i + 2);
                 continue;
             }
         }
         // Check for OVERWRITE
-        else if(parts_of_input[i] == ">" || parts_of_input[i] == "1>"){
-            if(i + 1 < parts_of_input.size()){
+        else if(input[i] == ">" || input[i] == "1>"){
+            if(i + 1 < input.size()){
 
-                stdout_file = parts_of_input[i + 1];
+                stdout_file = input[i + 1];
                 stdout_append = false; // Keep the append mode disabled
                 // Remove Operator and filename
-                parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                input.erase(input.begin() + i, input.begin() + i + 2);
                 // Do not increment because the next element shifted into current
                 continue;
             }
         }
         // Appending stderror
-        else if(parts_of_input[i] == "2>>"){
-            if(i + 1 < parts_of_input.size()){
-                stderr_file = parts_of_input[i + 1];
+        else if(input[i] == "2>>"){
+            if(i + 1 < input.size()){
+                stderr_file = input[i + 1];
                 stderr_append = true; // use O_APPEND
 
                 // erase the part
-                parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                input.erase(input.begin() + i, input.begin() + i + 2);
                 continue;
             }
         }
-        else if(parts_of_input[i] == "2>"){
-            if(i + 1 < parts_of_input.size()){
-                stderr_file = parts_of_input[i+1];
+        else if(input[i] == "2>"){
+            if(i + 1 < input.size()){
+                stderr_file = input[i+1];
                 // make the stderror append false
                 stderr_append = false; // use O_TRUNC
-                parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                input.erase(input.begin() + i, input.begin() + i + 2);
                 continue;
             }
         }
         i++; // Move next part only if we didn't remove anything
     }
 
-    if(parts_of_input.empty()) return true;
-    string command = parts_of_input[0];
+    if(input.empty()) return true;
+    string command = input[0];
     // string redirect_file = "";
     // bool append_mode = false;
 
     // // Scan for ">" or "1>"
-    // for(size_t i = 0; i < parts_of_input.size(); i++){
-    //     if(parts_of_input[i] == ">" || parts_of_input[i] == "1>"){
-    //         if(i + 1 < parts_of_input.size()){
-    //             redirect_file = parts_of_input[i + 1];
+    // for(size_t i = 0; i < input.size(); i++){
+    //     if(input[i] == ">" || input[i] == "1>"){
+    //         if(i + 1 < input.size()){
+    //             redirect_file = input[i + 1];
 
-    //             parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+    //             input.erase(input.begin() + i, input.begin() + i + 2);
     //             break;
     //         }
     //     }
     // }
 
-    // string command = parts_of_input[0];
+    // string command = input[0];
 
     // Save & RESTORE STDOUT for Builtins
     int saved_stdout = -1;
@@ -169,8 +169,8 @@ bool run_command(vector<string> parts_of_input){
 
             // cout<<args<<endl;
             // Print every thing after the first token
-            for(size_t i = 1; i<parts_of_input.size(); i++){
-                cout<<parts_of_input[i]<<(i == parts_of_input.size() - 1 ? "" : " ");
+            for(size_t i = 1; i<input.size(); i++){
+                cout<<input[i]<<(i == input.size() - 1 ? "" : " ");
             }
             cout<<endl;
             restore_redirection();
@@ -181,10 +181,10 @@ bool run_command(vector<string> parts_of_input){
     {
         if(setup_redirection()){
 
-            if(parts_of_input.size() >= 2){
+            if(input.size() >= 2){
 
                 
-                string args = parts_of_input[1];
+                string args = input[1];
 
                 if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd")
                 {
@@ -219,8 +219,8 @@ bool run_command(vector<string> parts_of_input){
     else if(command == "cd")
     {
         if(setup_redirection()){
-            if(parts_of_input.size() > 1){
-                string path = parts_of_input[1];
+            if(input.size() > 1){
+                string path = input[1];
                 // Handle ~  for Home path
                 if(path == "~"){
                     const char* home = getenv("HOME");
@@ -278,7 +278,7 @@ bool run_command(vector<string> parts_of_input){
                 setup_redirection(true);
 
                 vector<char*> args;
-                for(auto &s : parts_of_input){
+                for(auto &s : input){
                     args.push_back(&s[0]);
 
                 }
