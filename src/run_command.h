@@ -167,7 +167,7 @@ bool run_command(vector<string> input, bool should_fork = true){
 
     else if(command == "echo")
     {   
-        if(setup_redirection()){
+        if(setup_redirection(is_child)){
 
             // cout<<args<<endl;
             // Print every thing after the first token
@@ -181,7 +181,7 @@ bool run_command(vector<string> input, bool should_fork = true){
 
     else if(command == "type")
     {
-        if(setup_redirection()){
+        if(setup_redirection(is_child)){
 
             if(input.size() >= 2){
 
@@ -213,14 +213,14 @@ bool run_command(vector<string> input, bool should_fork = true){
     // Current Path 
     else if(command == "pwd")
     {
-        if(setup_redirection()){
+        if(setup_redirection(is_child)){
             cout<<filesystem::current_path().string()<<endl;
         }
     }
     // Change dir 
     else if(command == "cd")
     {
-        if(setup_redirection()){
+        if(setup_redirection(is_child)){
             if(input.size() > 1){
                 string path = input[1];
                 // Handle ~  for Home path
@@ -257,6 +257,7 @@ bool run_command(vector<string> input, bool should_fork = true){
         else
         {
             if(should_fork){ 
+                // Normal case : Shell --> Fork --> Exec
                 pid_t pid = fork();
 
                 if(pid == 0)
