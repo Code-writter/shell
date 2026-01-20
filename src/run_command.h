@@ -97,7 +97,7 @@ bool run_command(vector<string> input, bool should_fork = true){
 
     bool is_child = !should_fork;
 
-    auto setup_redirection = [&](bool is_child_process = false){
+    auto setup_redirection = [&](bool is_child_process){
         // 1. Handle STDOUT (>)
         if(!stdout_file.empty()){
             if(!is_child_process) saved_stdout = dup(STDOUT_FILENO);
