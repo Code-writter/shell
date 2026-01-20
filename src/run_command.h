@@ -4,6 +4,8 @@
 #include<fcntl.h> // for open(), O_CREAT, 
 #include<algorithm>
 #include<string>
+#include<fstream>
+
 // Readline headers for tab completions
 #include<stdio.h>
 #include<readline/readline.h>
@@ -170,15 +172,36 @@ bool run_command(vector<string> input, bool should_fork = true){
     else if(command ==  "history"){
         if(setup_redirection(is_child)){
             // Determine the starting address
-            int start_index = 0;
-            if(input.size() > 1){
-                try{
-                    int n = stoi(input[1]);
-                    start_index = max(0, (int)command_history.size() - n);
-                }catch(...){}
-            }
-            for(int i = start_index; i<command_history.size(); i++){
-                cout<<"    "<<i+1<<"  "<<command_history[i]<<endl;
+            if(input.size() > 1 && input[1] == "-r"){
+                if(input.size() > 2){
+                    string filename = input[2];
+                    ifstream file(filename);
+                    if((file.is_open())){
+                        string line;
+                        while(getline(file, line)){
+                            if(!line.empty()){
+                                command_history.push_back(line);
+                            }
+                        }
+                        file.close();
+                    }else{
+                        cerr <<"history:"<<filename<<": No such file or directory"<<endl;
+                    }
+                }
+                else{
+                    cerr<<"history: option requires an argument -- 'r'"<<endl;
+                }
+            }else{
+                int start_index = 0;
+                if(input.size() > 1){
+                    try{
+                        int n = stoi(input[1]);
+                        start_index = max(0, (int)command_history.size() - n);
+                    }catch(...){}
+                }
+                for(int i = start_index; i<command_history.size(); i++){
+                    cout<<"    "<<i+1<<"  "<<command_history[i]<<endl;
+                }
             }
             restore_redirection();
         }
