@@ -151,7 +151,7 @@ int main(){
                     // 2. setup next read end
                     if(!is_last){
                         prev_pipe_read = pipefd[0];
-                        close(pipefd[0]);
+                        close(pipefd[1]);
                     }
                 }
             }
