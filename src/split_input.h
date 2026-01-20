@@ -74,21 +74,14 @@ vector<string> split_input(string input) {
                 state = '"'; // Enter Double Quote Mode
             }
             else if (c == ' ') {
-                if (!current_arg.empty()) {
-                    args.push_back(current_arg);
-                    current_arg.clear();
-                }
+                push_arg();
             }
             else {
                 current_arg += c;
             }
         }
     }
-    
-    if (!current_arg.empty()) {
-        args.push_back(current_arg);
-    }
-    
+    push_arg();
     return args;
 }
 
