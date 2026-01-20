@@ -97,7 +97,7 @@ int main(){
         // Loop execution
         if(commands.size() == 1){
             // Normal executin (No pipes)
-            if(!run_command(commands[0]));
+            if(!run_command(commands[0])) break;
         }
         else{
             // PIPE EXECUTION
