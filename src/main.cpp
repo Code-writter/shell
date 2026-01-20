@@ -45,22 +45,50 @@ int main(){
         // ________________DETECT REDIRECTION__________
         string stdout_file = "";
         string stderr_file = "";
+        bool stdout_append = false; // For >> appending the stdout
+        bool stderr_append = false; // For 2>> appending the stderr
 
         // Scan loop must handle erasing elements dynamically
         for(size_t i = 0; i<parts_of_input.size(); ){
-            if(parts_of_input[i] == ">" || parts_of_input[i] == "1>"){
+            // Check for append first
+            if(parts_of_input[i] == ">>" || parts_of_input[i] == "1>>"){
+                if(i + 1 < parts_of_input.size()){
+                    stdout_file = parts_of_input[i+ 1];
+                    stdout_append = true; // Enable append Mode
+
+                    // Erase other part
+                    parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                    continue;
+                }
+            }
+            // Check for OVERWRITE
+            else if(parts_of_input[i] == ">" || parts_of_input[i] == "1>"){
                 if(i + 1 < parts_of_input.size()){
   
                     stdout_file = parts_of_input[i + 1];
+                    stdout_append = false; // Keep the append mode disabled
                     // Remove Operator and filename
                     parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
                     // Do not increment because the next element shifted into current
                     continue;
                 }
             }
+            // Appending stderror
+            else if(parts_of_input[i] == "2>>"){
+                if(i = 1 < parts_of_input.size()){
+                    stderr_file = parts_of_input[i + 1];
+                    stderr_append = true;
+
+                    // erase the part
+                    parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
+                    continue;
+                }
+            }
             else if(parts_of_input[i] == "2>"){
                 if(i + 1 < parts_of_input.size()){
                     stderr_file = parts_of_input[i+1];
+                    // make the stderror append false
+                    stderr_append = false;
                     parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
                     continue;
                 }
@@ -95,7 +123,18 @@ int main(){
             // 1. Handle STDOUT (>)
             if(!stdout_file.empty()){
                 if(!is_child_process) saved_stdout = dup(STDOUT_FILENO);
-                int fd = open(stdout_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+                // int fd = open(stdout_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+                // Determine flags based on the mode
+                int flags = O_WRONLY | O_CREAT;
+                if(stdout_append){
+                    flags |= O_APPEND; // Add to end
+                }else{
+                    flags |= O_TRUNC; // Wipe clean the previous data
+                }
+
+                int fd = open(stdout_file.c_str(), flags, 0644);
 
                 if(fd < 0){
                     perror("open stdout");
@@ -105,10 +144,18 @@ int main(){
                 dup2(fd, STDOUT_FILENO);
                 close(fd);
             }
-
+            //2. HANDLE STDERR
             if(!stderr_file.empty()){
                 if(!is_child_process) saved_stderr = dup(STDERR_FILENO);
-                int fd = open(stderr_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                // int fd = open(stderr_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                int flags = O_WRONLY | O_CREAT;
+                if(stdout_append){
+                    flags |= O_APPEND; // Add to end
+                }else{
+                    flags |= O_TRUNC; // Wipe clean the previous data
+                }
+
+                int fd = open(stderr_file.c_str(), flags, 0644);
 
                 if(fd < 0){
                     perror("open stderr");
