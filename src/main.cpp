@@ -75,7 +75,7 @@ int main(){
             }
             // Appending stderror
             else if(parts_of_input[i] == "2>>"){
-                if(i = 1 < parts_of_input.size()){
+                if(i + 1 < parts_of_input.size()){
                     stderr_file = parts_of_input[i + 1];
                     stderr_append = true; // use O_APPEND
 
@@ -161,6 +161,7 @@ int main(){
                     perror("open stderr");
                     return false;
                 }
+
                 dup2(fd, STDERR_FILENO);
                 close(fd);
             }
