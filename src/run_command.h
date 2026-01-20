@@ -198,7 +198,7 @@ bool run_command(vector<string> input, bool should_fork = true){
                 
                 string args = input[1];
 
-                if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd")
+                if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd" || args == "history")
                 {
                     cout<<args<<" is a shell builtin"<<endl;
                 }
