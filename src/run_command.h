@@ -177,7 +177,7 @@ bool run_command(vector<string> input, bool should_fork = true){
                     start_index = max(0, (int)command_history.size() - n);
                 }catch(...){}
             }
-            for(size_t i = 0; i<command_history.size(); i++){
+            for(int i = start_index; i<command_history.size(); i++){
                 cout<<"    "<<i+1<<"  "<<command_history[i]<<endl;
             }
             restore_redirection();
