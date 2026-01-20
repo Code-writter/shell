@@ -77,7 +77,7 @@ int main(){
             else if(parts_of_input[i] == "2>>"){
                 if(i = 1 < parts_of_input.size()){
                     stderr_file = parts_of_input[i + 1];
-                    stderr_append = true;
+                    stderr_append = true; // use O_APPEND
 
                     // erase the part
                     parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
@@ -88,7 +88,7 @@ int main(){
                 if(i + 1 < parts_of_input.size()){
                     stderr_file = parts_of_input[i+1];
                     // make the stderror append false
-                    stderr_append = false;
+                    stderr_append = false; // use O_TRUNC
                     parts_of_input.erase(parts_of_input.begin() + i, parts_of_input.begin() + i + 2);
                     continue;
                 }
@@ -149,7 +149,7 @@ int main(){
                 if(!is_child_process) saved_stderr = dup(STDERR_FILENO);
                 // int fd = open(stderr_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 int flags = O_WRONLY | O_CREAT;
-                if(stdout_append){
+                if(stderr_append){
                     flags |= O_APPEND; // Add to end
                 }else{
                     flags |= O_TRUNC; // Wipe clean the previous data
