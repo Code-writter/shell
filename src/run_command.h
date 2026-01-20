@@ -16,6 +16,8 @@
 #include "split_input.h"
 #include "builtin_generator.h"
 
+int history_write_index = 0;
+
 using namespace std;
 
 vector<string> command_history;
@@ -184,6 +186,7 @@ bool run_command(vector<string> input, bool should_fork = true){
                             }
                         }
                         file.close();
+                        history_write_index = command_history.size();
                     }else{
                         cerr <<"history:"<<filename<<": No such file or directory"<<endl;
                     }
@@ -202,11 +205,30 @@ bool run_command(vector<string> input, bool should_fork = true){
                             file<<line <<endl;
                         }
                         file.close();
+                        history_write_index = command_history.size();
                     }else{
                         cerr<<"history: "<< filename <<": cannot create file"<<endl;
                     }
                 }else{
                     cerr<<"history: option requires an argument -- 'w'"<<endl;
+                }
+            }
+            else if(input.size() > 2 && input[1] == "-a"){
+                if(input.size()> 2){
+                    string filename = input[2];
+
+                    ofstream file(filename, std::ios::app); //append index
+                    if(file.is_open()){
+                        for(int i = history_write_index; i<command_history.size(); i++){
+                            file<<command_history[i]<<endl;
+                        }
+                        file.close();
+                        history_write_index = command_history.size();
+                    }else{
+                        cerr<<"history: "<< filename <<": cannot create file"<<endl;
+                    }
+                }else{
+                    cerr<<"history: option requires an argument -- 'a'"<<endl;
                 }
             }
             else{
