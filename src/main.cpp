@@ -87,8 +87,11 @@ int main(){
 
             //1. create the Pipe
             int pipefd[2];
-            if(pipe(pipefd) == -1)
-                perror("pipe"); continue;
+            if(pipe(pipefd) == -1){
+                perror("pipe"); 
+                continue;
+            }
+                
 
             //2. Fork the Left Child (Writer)
             pid_t pid1 = fork();

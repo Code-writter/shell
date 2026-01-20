@@ -160,7 +160,7 @@ bool run_command(vector<string> input){
 
     if(command == "exit")
     {
-        return 0;
+        return false;
     }
 
     else if(command == "echo")
@@ -292,12 +292,12 @@ bool run_command(vector<string> input){
                 perror("execvp");
                 exit(1);
             }
-            else if(pid > 0)
-            {
-                // PARENT PROCESS
-                int status;
-                waitpid(pid, &status, 0);
-            }
+            // else if(pid > 0)
+            // {
+            //     // PARENT PROCESS
+            //     int status;
+            //     waitpid(pid, &status, 0);
+            // }
             else
             {
                 wait(NULL);
