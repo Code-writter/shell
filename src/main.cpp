@@ -97,7 +97,7 @@ int main(){
         // Loop execution
         if(commands.size() == 1){
             // Normal executin (No pipes)
-            if(!run_command(commands[0])) break;
+            if(!run_command(commands[0], true)) break;
         }
         else{
             // PIPE EXECUTION
@@ -136,7 +136,7 @@ int main(){
                     }
 
                     // RUN
-                    run_command(commands[i]);
+                    run_command(commands[i], false); // Without forking
                     exit(0);
                 }
                 else{

@@ -7,8 +7,22 @@ vector<string> split_input(string input) {
     string current_arg;
     char state = 0; // 0 = None, ' = Single Quote, " = Double Quote
     
+    auto push_arg = [&](){
+        if(!current_arg.empty()){
+            args.push_back(current_arg);
+            current_arg.clear();
+        }
+    };
+
     for (size_t i = 0; i < input.length(); i++) {
         char c = input[i];
+
+        if(state == 0 && c == '|'){
+            // Found a pipe outside of 
+            push_arg(); 
+            args.push_back("|");
+            continue;
+        }
 
         if (state == '\'') {
             // --- SINGLE QUOTE MODE ---

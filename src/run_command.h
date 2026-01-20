@@ -16,7 +16,7 @@
 using namespace std;
 
 
-bool run_command(vector<string> input){
+bool run_command(vector<string> input, bool should_fork = true){
 
     // ________________DETECT REDIRECTION__________
     string stdout_file = "";
@@ -94,6 +94,8 @@ bool run_command(vector<string> input){
     // Save & RESTORE STDOUT for Builtins
     int saved_stdout = -1;
     int saved_stderr = -1;
+
+    bool is_child = !should_fork;
 
     auto setup_redirection = [&](bool is_child_process = false){
         // 1. Handle STDOUT (>)
@@ -250,57 +252,69 @@ bool run_command(vector<string> input){
         if(path.empty())
         {
             cout<<command<<": command not found"<<endl;
+            if(!should_fork) exit(0);
         }
         else
         {
-            pid_t pid = fork();
+            if(should_fork){ 
+                pid_t pid = fork();
 
-            if(pid == 0)
-            {
-                // CHILD PROCESS
-                // we are now inside the child process we must replace this
-                // process with target program using execvp.
+                if(pid == 0)
+                {
+                    // CHILD PROCESS
+                    // we are now inside the child process we must replace this
+                    // process with target program using execvp.
 
-                // convert vector<string> to char* array for C API
+                    // convert vector<string> to char* array for C API
 
-                // Handle Redirection inside the child
-                // if(!redirect_file.empty()){
-                //     int fd = open(redirect_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                //     if(fd < 0){
-                //         perror("open");
-                //         exit(1);
-                //     }
+                    // Handle Redirection inside the child
+                    // if(!redirect_file.empty()){
+                    //     int fd = open(redirect_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                    //     if(fd < 0){
+                    //         perror("open");
+                    //         exit(1);
+                    //     }
 
-                //     // Replace stdout with file
-                //     dup2(fd, STDOUT_FILENO);
-                //     close(fd);
+                    //     // Replace stdout with file
+                    //     dup2(fd, STDOUT_FILENO);
+                    //     close(fd);
+                    // }
+                    setup_redirection(true);
+
+                    vector<char*> args;
+                    for(auto &s : input){
+                        args.push_back(&s[0]);
+
+                    }
+                    args.push_back(NULL); // Must be NULL teminated
+
+                    // EXECUTE
+                    // execvp searches PATH program automatically and runs the command.
+                    execvp(command.c_str(), args.data());
+                    
+                    // IF execvp returns, it failed (ex : Permission denied)
+                    perror("execvp");
+                    exit(1);
+                }
+                // else if(pid > 0)
+                // {
+                //     // PARENT PROCESS
+                //     int status;
+                //     waitpid(pid, &status, 0);
                 // }
+                else
+                {
+                    wait(NULL);
+                }
+            }else{
                 setup_redirection(true);
 
                 vector<char*> args;
-                for(auto &s : input){
-                    args.push_back(&s[0]);
-
-                }
-                args.push_back(NULL); // Must be NULL teminated
-
-                // EXECUTE
-                // execvp searches PATH program automatically and runs the command.
+                for(auto &s : input) args.push_back(&s[0]);
+                args.push_back(NULL);
                 execvp(command.c_str(), args.data());
-                
-                // IF execvp returns, it failed (ex : Permission denied)
                 perror("execvp");
                 exit(1);
-            }
-            // else if(pid > 0)
-            // {
-            //     // PARENT PROCESS
-            //     int status;
-            //     waitpid(pid, &status, 0);
-            // }
-            else
-            {
-                wait(NULL);
             }
         }
         // cout<<input_line<<": command not found"<<endl;
