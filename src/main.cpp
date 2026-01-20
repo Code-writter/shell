@@ -27,6 +27,23 @@ int main(){
     //____READLINE____
     rl_attempted_completion_function = shell_completion;
 
+    // _____LOAD HISTORY FORM HASHFILE______
+    const char* histfile = getenv("HISTFILE");
+    if(histfile){
+        ifstream file(histfile);
+        if(file.is_open()){
+            string line;
+            while(getline(file, line)){
+                if(!line.empty()){
+                    command_history.push_back(line);
+                    add_history(line.c_str());
+                }
+            }
+            file.close();
+            history_write_index = command_history.size();
+        }
+    }
+
     while(true){
         // cout<<"$ ";
 
@@ -162,6 +179,8 @@ int main(){
             }
         }
 
+
+
         // 1. Finding the pipe in the command
         // auto pipe_it = find(parts_of_input.begin(), parts_of_input.end(), "|");
 
@@ -223,4 +242,15 @@ int main(){
         // }
 
     }
+
+    if(histfile){
+        ofstream file(histfile, std::ios::app);
+        if(file.is_open()){
+            for(int i = history_write_index; i<command_history.size(); i++){
+                file<<command_history[i]<<endl;
+            }
+            file.close();
+        }
+    }
+    return 0;
 }
