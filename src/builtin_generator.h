@@ -11,7 +11,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-vector<string> builtin_candidates = {"echo", "exit", "type", "pwd", "cd"};
+vector<string> builtin_candidates = {"echo", "exit", "type", "pwd", "cd", "history"};
 vector<string> matches; // Chache matches during autocompletion
 
 // The Generator: Populates 'matches' on state 0, then feeds them back

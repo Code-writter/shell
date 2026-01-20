@@ -48,6 +48,7 @@ int main(){
         // Add valid commands to history (allows up arrow usage)
         if(!input_line.empty()){
             add_history(input_c);
+            command_history.push_back(input_line);
         }
 
         // Free the Memory readline allocated 

@@ -15,6 +15,7 @@
 
 using namespace std;
 
+vector<string> command_history;
 
 bool run_command(vector<string> input, bool should_fork = true){
 
@@ -163,6 +164,15 @@ bool run_command(vector<string> input, bool should_fork = true){
     if(command == "exit")
     {
         return false;
+    }
+
+    else if(command ==  "history"){
+        if(setup_redirection(is_child)){
+            for(size_t i = 0; i<command_history.size(); i++){
+                cout<<"    "<<i+1<<"  "<<command_history[i]<<endl;
+            }
+            restore_redirection();
+        }
     }
 
     else if(command == "echo")
