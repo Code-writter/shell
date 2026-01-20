@@ -2,11 +2,20 @@
 #include<sys/wait.h> // For wait()
 #include<filesystem> // for pwd
 #include<fcntl.h> // for open(), O_CREAT, 
+
+// Readline headers for tab completions
+#include<stdio.h>
+#include<readline/readline.h>
+#include<readline/history.h>
+
 // Custom Headers
 #include "get_file_path.h"
 #include "split_input.h"
+#include "builtin_generator.h"
 
 using namespace std;
+
+// vector<string> builtin_candidates = {"echo", "exit", "type", "pwd", "cd"};
 
 int main(){
     // Flush after every std::cout / std::cerr
@@ -14,15 +23,36 @@ int main(){
     cout<<unitbuf;
     cerr<<unitbuf;
 
+    //____READLINE____
+    rl_attempted_completion_function = shell_completion;
+
     while(true){
-        cout<<"$ ";
+        // cout<<"$ ";
 
         // Capture user commands
-        string input_line;
-        getline(cin, input_line);
+        // string input_line;
+        // getline(cin, input_line);
 
+        // if(input_line.empty()) continue;
+        
+        char* input_c = readline("$ ");
+
+        // readline returns NULL or EOF (Ctrl+D)
+        if(!input_c){
+            cout<<endl;
+            break;
+        }
+
+        string input_line = input_c;
+        // Add valid commands to history (allows up arrow usage)
+        if(!input_line.empty()){
+            add_history(input_c);
+        }
+
+        // Free the Memory readline allocated 
+        free(input_c);
+        
         if(input_line.empty()) continue;
-
         // stringstream ss(input_line);
 
         // string command, args;
