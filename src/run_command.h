@@ -2,7 +2,8 @@
 #include<sys/wait.h> // For wait()
 #include<filesystem> // for pwd
 #include<fcntl.h> // for open(), O_CREAT, 
-
+#include<algorithm>
+#include<string>
 // Readline headers for tab completions
 #include<stdio.h>
 #include<readline/readline.h>
@@ -168,6 +169,14 @@ bool run_command(vector<string> input, bool should_fork = true){
 
     else if(command ==  "history"){
         if(setup_redirection(is_child)){
+            // Determine the starting address
+            int start_index = 0;
+            if(input.size() > 1){
+                try{
+                    int n = stoi(input[1]);
+                    start_index = max(0, (int)command_history.size() - n);
+                }catch(...){}
+            }
             for(size_t i = 0; i<command_history.size(); i++){
                 cout<<"    "<<i+1<<"  "<<command_history[i]<<endl;
             }
