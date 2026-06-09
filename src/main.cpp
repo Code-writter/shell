@@ -2,6 +2,7 @@
 #include<sys/wait.h> // For wait()
 #include<filesystem> // for pwd
 #include<fcntl.h> // for open(), O_CREAT, 
+#include <signal.h> // For signal handling
 
 // Readline headers for tab completions
 #include<stdio.h>
@@ -20,21 +21,36 @@ using namespace std;
 
 int main(){
     // Flush after every std::cout / std::cerr
-
     cout<<unitbuf;
     cerr<<unitbuf;
+
+    // --- PARENT SHELL TERMINAL CONTROL SETUP ---
+    // Ignore terminal stop signals to prevent the shell from freezing 
+    // when assigning foreground process groups to children (like tmux).
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
 
     //____READLINE____
     rl_attempted_completion_function = shell_completion;
 
+    // _____LOAD HISTORY FORM HASHFILE______
+    const char* histfile = getenv("HISTFILE");
+    if(histfile){
+        ifstream file(histfile);
+        if(file.is_open()){
+            string line;
+            while(getline(file, line)){
+                if(!line.empty()){
+                    command_history.push_back(line);
+                    add_history(line.c_str());
+                }
+            }
+            file.close();
+            history_write_index = command_history.size();
+        }
+    }
+
     while(true){
-        // cout<<"$ ";
-
-        // Capture user commands
-        // string input_line;
-        // getline(cin, input_line);
-
-        // if(input_line.empty()) continue;
         
         char* input_c = readline("$ ");
 
@@ -55,21 +71,6 @@ int main(){
         free(input_c);
         
         if(input_line.empty()) continue;
-        // stringstream ss(input_line);
-
-        // string command, args;
-
-        // ss >> command;
-
-        // size_t command_length = command.length();
-        // if(input_line.length() > command_length){
-        //     size_t arg_start = input_line.find_first_not_of(" ", command_length);
-
-        //     if(arg_start != string::npos){
-        //         args = input_line.substr(arg_start);
-        //     }
-        // }
-
 
         // Parsing Input into list of strings
         vector<string> parts_of_input = split_input(input_line);
@@ -97,13 +98,50 @@ int main(){
 
         // Loop execution
         if(commands.size() == 1){
-            // Normal executin (No pipes)
-            if(!run_command(commands[0], true)) break;
+            // Normal execution (No pipes)
+            
+            pid_t pid = fork();
+            
+            if (pid < 0) {
+                perror("Fork failed");
+                continue;
+            }
+            
+            if (pid == 0) {
+                // --- CHILD PROCESS ---
+                // 1. Put the child in its own process group
+                setpgid(0, 0);
+
+                // 2. Hand over terminal foreground control to this child
+                tcsetpgrp(STDIN_FILENO, getpid());
+                
+                // RUN command (Assumes run_command handles execvp and exits)
+                if(!run_command(commands[0], false)) exit(0); 
+                exit(0);
+                
+            } else {
+                 // --- PARENT PROCESS ---
+                
+                // 1. Also set the child's process group here to avoid race conditions
+                setpgid(pid, pid);
+
+                // 2. Hand over terminal control to the child process group
+                tcsetpgrp(STDIN_FILENO, pid);
+
+                // 3. Wait for child (e.g., tmux) to finish or be suspended
+                int status;
+                waitpid(pid, &status, WUNTRACED);
+
+                // 4. RECLAIM THE TERMINAL! 
+                // Give control back to your shell's process ID so your prompt works again.
+                tcsetpgrp(STDIN_FILENO, getpid());
+            }
         }
         else{
             // PIPE EXECUTION
             int prev_pipe_read = -1;
             vector<pid_t> children;
+            pid_t last_child_pid = -1;
 
             for(size_t i = 0; i<commands.size(); i++){
                 int pipefd[2];
@@ -121,7 +159,14 @@ int main(){
                 pid_t pid = fork();
 
                 if(pid == 0){
-                    // CHILD PROCESS
+                    // --- CHILD PROCESS ---
+                    
+                    // For terminal control, only the LAST process in a pipeline 
+                    // should get foreground TTY control.
+                    if (is_last) {
+                        setpgid(0, 0);
+                        tcsetpgrp(STDIN_FILENO, getpid());
+                    }
 
                     // 1. Setup Input
                     if(prev_pipe_read != -1){
@@ -141,8 +186,14 @@ int main(){
                     exit(0);
                 }
                 else{
-                    // PARENT PROCESS
+                    // --- PARENT PROCESS ---
                     children.push_back(pid);
+                    
+                    if (is_last) {
+                        last_child_pid = pid;
+                        setpgid(pid, pid);
+                        tcsetpgrp(STDIN_FILENO, pid);
+                    }
 
                     // 1. Close the previous read end
                     if(prev_pipe_read != -1){
@@ -157,70 +208,29 @@ int main(){
                 }
             }
 
+            // Wait for all children in pipeline
             for(pid_t pid : children){
-                waitpid(pid, NULL, 0);
+                int status;
+                waitpid(pid, &status, WUNTRACED);
             }
+            
+            // Reclaim terminal control after pipeline finishes
+            tcsetpgrp(STDIN_FILENO, getpid());
         }
-
-        // 1. Finding the pipe in the command
-        // auto pipe_it = find(parts_of_input.begin(), parts_of_input.end(), "|");
-
-        // // 2. We got the pipe in the command
-        // if(pipe_it != parts_of_input.end()){
-        //     // split parts of cammand into left command and right command
-        //     vector<string> left_part(parts_of_input.begin(), pipe_it);
-        //     vector<string> right_part(pipe_it + 1, parts_of_input.end());
-
-        //     //1. create the Pipe
-        //     int pipefd[2];
-        //     if(pipe(pipefd) == -1){
-        //         perror("pipe"); 
-        //         continue;
-        //     }
-                
-
-        //     //2. Fork the Left Child (Writer)
-        //     pid_t pid1 = fork();
-        //     if(pid1 == 0){
-        //         // Redirect stdout to pipe write end
-        //         dup2(pipefd[1], STDOUT_FILENO);
-
-        //         // Close both the ends we only need the dup'd copy
-        //         close(pipefd[0]);
-        //         close(pipefd[1]);
-
-        //         // Run the command 
-        //         run_command(left_part);
-        //         exit(0); 
-        //     }
-
-        //     // 3. Fork the right child (Reader)
-        //     pid_t pid2 = fork();
-        //     if(pid2 == 0){
-        //         // Redirect stdin from pipe read-end
-
-        //         dup2(pipefd[0], STDIN_FILENO);
-        //         close(pipefd[0]);
-        //         close(pipefd[1]);
-
-        //         run_command(right_part);
-        //         exit(0);
-        //     }
-
-        //     // 4. Parent : Close Pipes and wait
-        //     close(pipefd[0]);
-        //     close(pipefd[1]);
-        //     // Wait for a child matching PID to die.
-        //     // If PID is greater than 0, match any process whose process ID is PID.
-        //     waitpid(pid1, NULL, 0);
-        //     waitpid(pid2, NULL, 0);
-
-        // }else{
-        //     // Notmal Execution (No pipes are given)
-        //     if(!run_command(parts_of_input)) break; // Break if exit command found 
-        //     // we are checking boolean because the run command function will return 
-        //     // false when get the exit command
-        // }
-
     }
+
+    // --- RESTORE DEFAULT SIGNALS BEFORE EXITING ---
+    signal(SIGTTOU, SIG_DFL);
+    signal(SIGTTIN, SIG_DFL);
+
+    if(histfile){
+        ofstream file(histfile, std::ios::app);
+        if(file.is_open()){
+            for(int i = history_write_index; i<command_history.size(); i++){
+                file<<command_history[i]<<endl;
+            }
+            file.close();
+        }
+    }
+    return 0;
 }

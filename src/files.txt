@@ -1,0 +1,26 @@
+total 196
+drwxrwxr-x 2 ubuntu ubuntu   4096 Feb 14 10:53 .
+drwxrwxr-x 5 ubuntu ubuntu   4096 Jan 20 18:23 ..
+-rw-rw-r-- 1 ubuntu ubuntu   3338 Jan 21 01:04 builtin_generator.h
+-rw-r--r-- 1 ubuntu ubuntu      0 Feb 14 10:53 files.txt
+-rw-rw-r-- 1 ubuntu ubuntu    727 Jan 19 15:47 get_file_path.h
+-rw-rw-r-- 1 ubuntu ubuntu   7616 Jan 21 02:13 main.cpp
+-rw-rw-r-- 1 ubuntu ubuntu  13076 Jan 21 02:03 run_command.h
+-rwxrwxr-x 1 ubuntu ubuntu 151000 Feb 14 10:52 shell
+-rw-rw-r-- 1 ubuntu ubuntu   7016 Jan 21 00:38 split_input.h
+total 76
+drwxrwxr-x 5 ubuntu ubuntu  4096 Feb 14 10:54 .
+drwxrwxr-x 4 ubuntu ubuntu  4096 Jan 19 14:03 ..
+-rw-rw-r-- 1 ubuntu ubuntu   260 Jan 19 13:54 CMakeLists.txt
+drwxrwxr-x 2 ubuntu ubuntu  4096 Jan 19 13:54 .codecrafters
+-rw-rw-r-- 1 ubuntu ubuntu   277 Jan 19 13:54 codecrafters.yml
+-rw-r--r-- 1 ubuntu ubuntu   865 Feb 14 10:54 files.txt
+drwxrwxr-x 8 ubuntu ubuntu  4096 Jan 21 02:13 .git
+-rw-rw-r-- 1 ubuntu ubuntu    12 Jan 19 13:54 .gitattributes
+-rw-rw-r-- 1 ubuntu ubuntu 16612 Jan 19 13:54 .gitignore
+-rw-rw-r-- 1 ubuntu ubuntu  1358 Jan 19 13:54 README.md
+-rw-rw-r-- 1 ubuntu ubuntu    31 Jan 20 18:23 run.txt
+drwxrwxr-x 2 ubuntu ubuntu  4096 Feb 14 10:53 src
+-rw-rw-r-- 1 ubuntu ubuntu   373 Jan 19 13:54 vcpkg-configuration.json
+-rw-rw-r-- 1 ubuntu ubuntu    26 Jan 19 13:54 vcpkg.json
+-rwxrwxr-x 1 ubuntu ubuntu   828 Jan 19 13:54 your_program.sh

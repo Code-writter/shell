@@ -5,6 +5,8 @@
 #include<algorithm>
 #include<string>
 #include<fstream>
+#include<memory> // For unique_ptr
+#include<array>  // For array
 
 // Readline headers for tab completions
 #include<stdio.h>
@@ -80,22 +82,6 @@ bool run_command(vector<string> input, bool should_fork = true){
 
     if(input.empty()) return true;
     string command = input[0];
-    // string redirect_file = "";
-    // bool append_mode = false;
-
-    // // Scan for ">" or "1>"
-    // for(size_t i = 0; i < input.size(); i++){
-    //     if(input[i] == ">" || input[i] == "1>"){
-    //         if(i + 1 < input.size()){
-    //             redirect_file = input[i + 1];
-
-    //             input.erase(input.begin() + i, input.begin() + i + 2);
-    //             break;
-    //         }
-    //     }
-    // }
-
-    // string command = input[0];
 
     // Save & RESTORE STDOUT for Builtins
     int saved_stdout = -1;
@@ -107,8 +93,6 @@ bool run_command(vector<string> input, bool should_fork = true){
         // 1. Handle STDOUT (>)
         if(!stdout_file.empty()){
             if(!is_child_process) saved_stdout = dup(STDOUT_FILENO);
-
-            // int fd = open(stdout_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
             // Determine flags based on the mode
             int flags = O_WRONLY | O_CREAT;
@@ -131,7 +115,6 @@ bool run_command(vector<string> input, bool should_fork = true){
         //2. HANDLE STDERR
         if(!stderr_file.empty()){
             if(!is_child_process) saved_stderr = dup(STDERR_FILENO);
-            // int fd = open(stderr_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             int flags = O_WRONLY | O_CREAT;
             if(stderr_append){
                 flags |= O_APPEND; // Add to end
@@ -247,6 +230,94 @@ bool run_command(vector<string> input, bool should_fork = true){
         }
     }
 
+    // --- NEW: AI INTEGRATION ---
+    else if (command == "ai") {
+        if (setup_redirection(is_child)) {
+            // 1. Gather the prompt
+            string prompt = "";
+            for (size_t i = 1; i < input.size(); i++) { 
+                prompt += input[i] + " ";               
+            }
+
+            // 2. Gather the last 5 commands from history as context
+            string recent_history = "";
+            int start_idx = max(0, (int)command_history.size() - 5);
+            for (int i = start_idx; i < command_history.size(); i++) {
+                recent_history += command_history[i] + "\n";
+            }
+
+            // 3. Helper to escape quotes so the shell doesn't break
+            auto escape_quotes = [](const string& str) {
+                string escaped;
+                for (char c : str) {
+                    if (c == '"' || c == '\\' || c == '`' || c == '$') escaped += '\\';
+                    escaped += c;
+                }
+                return escaped;
+            };
+
+            // 4. Construct the popen command
+            string script_path = std::filesystem::current_path().string() + "/ai_agent.py"; 
+            string system_cmd = "python3 " + script_path + " --history \"" + 
+                                escape_quotes(recent_history) + "\" \"" + escape_quotes(prompt) + "\"";
+
+            // 5. Execute using popen to CAPTURE the output
+            array<char, 128> buffer;
+            string full_output;
+            unique_ptr<FILE, decltype(&pclose)> pipe(popen(system_cmd.c_str(), "r"), pclose);
+            
+            if (!pipe) {
+                cerr << "❌ Failed to start AI assistant." << endl;
+            } else {
+                while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                    full_output += buffer.data();
+                }
+
+                // 6. Parse the <EXEC> tags
+                string start_tag = "<EXEC>";
+                string end_tag = "</EXEC>";
+                size_t start_pos = full_output.find(start_tag);
+                size_t end_pos = full_output.find(end_tag);
+
+                if (start_pos != string::npos && end_pos != string::npos && end_pos > start_pos) {
+                    // Extract explanation
+                    string explanation = full_output.substr(0, start_pos);
+                    explanation.erase(explanation.find_last_not_of(" \n\r\t") + 1);
+                    
+                    // Extract command
+                    size_t cmd_start = start_pos + start_tag.length();
+                    string exec_command = full_output.substr(cmd_start, end_pos - cmd_start);
+                    exec_command.erase(0, exec_command.find_first_not_of(" \n\r\t"));
+                    exec_command.erase(exec_command.find_last_not_of(" \n\r\t") + 1);
+
+                    // 7. Print and ask for confirmation
+                    cout << "\n🤖 " << explanation << "\n\n";
+                    cout << "🚀 Run command: \033[1;32m" << exec_command << "\033[0m ? [Y/n/Enter]: ";
+                    
+                    string user_choice;
+                    getline(cin, user_choice);
+
+                    if (user_choice.empty() || user_choice == "y" || user_choice == "Y") {
+                        cout << endl;
+                        
+                        vector<string> ai_parsed_input = split_input(exec_command); 
+                        
+                        // 9. Recursively run the command!
+                        if (!ai_parsed_input.empty()) {
+                            run_command(ai_parsed_input, should_fork);
+                        }
+                    } else {
+                        cout << "Skipped.\n";
+                    }
+                } else {
+                    // Fallback if AI didn't use tags correctly
+                    cout << "\n🤖 " << full_output << "\n";
+                }
+            }
+            restore_redirection();
+        }
+    }
+
     else if(command == "echo")
     {   
         if(setup_redirection(is_child)){
@@ -267,7 +338,6 @@ bool run_command(vector<string> input, bool should_fork = true){
 
             if(input.size() >= 2){
 
-                
                 string args = input[1];
 
                 if(args == "exit" || args == "echo" || args == "type" || args == "pwd" || args == "cd" || args == "history")
@@ -277,7 +347,6 @@ bool run_command(vector<string> input, bool should_fork = true){
                 else
                 {
                     // Get path
-
                     string path = get_path(args);
 
                     if(!path.empty()){
@@ -311,10 +380,6 @@ bool run_command(vector<string> input, bool should_fork = true){
                     if(home){
                         path = home;
                     }
-                    // else{
-                    //     cout<<"cd: HOME environment variable not set";
-                    //     continue;
-                    // }
                 }
                 // chdir returns 0 on sucess and -1 on failure
                 if(chdir(path.c_str()) != 0){
@@ -344,24 +409,6 @@ bool run_command(vector<string> input, bool should_fork = true){
 
                 if(pid == 0)
                 {
-                    // CHILD PROCESS
-                    // we are now inside the child process we must replace this
-                    // process with target program using execvp.
-
-                    // convert vector<string> to char* array for C API
-
-                    // Handle Redirection inside the child
-                    // if(!redirect_file.empty()){
-                    //     int fd = open(redirect_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                    //     if(fd < 0){
-                    //         perror("open");
-                    //         exit(1);
-                    //     }
-
-                    //     // Replace stdout with file
-                    //     dup2(fd, STDOUT_FILENO);
-                    //     close(fd);
-                    // }
                     setup_redirection(true);
 
                     vector<char*> args;
@@ -372,19 +419,12 @@ bool run_command(vector<string> input, bool should_fork = true){
                     args.push_back(NULL); // Must be NULL teminated
 
                     // EXECUTE
-                    // execvp searches PATH program automatically and runs the command.
                     execvp(command.c_str(), args.data());
                     
                     // IF execvp returns, it failed (ex : Permission denied)
                     perror("execvp");
                     exit(1);
                 }
-                // else if(pid > 0)
-                // {
-                //     // PARENT PROCESS
-                //     int status;
-                //     waitpid(pid, &status, 0);
-                // }
                 else
                 {
                     wait(NULL);
@@ -400,7 +440,6 @@ bool run_command(vector<string> input, bool should_fork = true){
                 exit(1);
             }
         }
-        // cout<<input_line<<": command not found"<<endl;
     }
     return true; //Continue shell loop
 }
